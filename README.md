@@ -71,5 +71,5 @@ docs.google.com/spreadsheets/d/**1SbcEAAhF2PWIGKZMOJupn\_\_jkTGigWtmAqWlrHZri3Q*
 52. Install dependencies (`pip install -r requirements_to_freeze.txt`)
 53. Run `python -m app`
 54. The first time it starts, it should automatically open the google auth page (if not, copy the URL in the terminal). On this page, you need to be authenticated in Gmail, which you will use to forward 2FA emails.
-55. Enter Batch
+55. Enter Full name
 56. Click "OK"
