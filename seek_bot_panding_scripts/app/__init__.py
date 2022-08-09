@@ -12,7 +12,7 @@ from app.services import (
     SeekClient,
 )
 from app.logger import log
-from config import config as conf
+from indeed_bot_panding_scripts.config import config as conf
 
 TK_ROOT = None
 if not conf.TESTING:

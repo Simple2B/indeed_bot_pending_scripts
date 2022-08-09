@@ -1,2 +1,0 @@
-cmd /k "pip install -r requirements_to_freeze.txt & msg * "Success" & exit 0"
-@REM cmd /k "python -m venv .venv & cd .\.venv\Scripts & activate & cd ../.. & pip install -r requirements_to_freeze.txt & msg * "Success" & exit 0"

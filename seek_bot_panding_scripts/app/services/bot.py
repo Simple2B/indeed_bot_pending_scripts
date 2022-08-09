@@ -16,7 +16,7 @@ from .utils import current_date, str_has_exclude_word
 from .google_sheets import google_sheets_client
 from .google_client import GoodleClient
 from app.logger import log
-from config import config as conf
+from indeed_bot_panding_scripts.config import config as conf
 from .bs4_parser import BS4Parser
 
 try:

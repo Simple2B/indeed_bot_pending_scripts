@@ -7,7 +7,7 @@ import httplib2
 import apiclient.discovery
 
 from .utils import print_work_time, current_date, sorted_row_by_titles_list
-from config import config as conf
+from indeed_bot_panding_scripts.config import config as conf
 
 
 class GoogleSheetsClient:
