@@ -1,0 +1,13 @@
+google-api-python-client
+oauth2client
+black
+selenium
+fake_useragent
+anticaptchaofficial
+gspread
+bs4
+lxml
+pyinstaller
+python-dotenv
+sqlalchemy
+pycountry
