@@ -12,7 +12,7 @@ from app.services import (
     checking_internet_connection,
 )
 from app.logger import log
-from indeed_bot_panding_scripts.config import config as conf
+from config import config as conf
 
 TK_ROOT = None
 if not conf.TESTING:
@@ -35,6 +35,12 @@ def generate_clients():
                 )
         checking_internet_connection()
         clients_data = google_sheets_client.get_clients_list(full_name=batch)
+        if len(clients_data) > 1:
+            log(
+                log.INFO,
+                f"The bot found several clients with this Full Name: {batch} .Bot will processing just first client.",
+            )
+            clients_data = (clients_data[0],)
         if clients_data:
             break
         batch = ""

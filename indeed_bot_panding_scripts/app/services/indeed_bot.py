@@ -25,7 +25,7 @@ from .google_client import GoodleClient
 from .anticaptcha import anticaptcha
 from app.logger import log
 from .proxies import proxy_service
-from indeed_bot_panding_scripts.config import config as conf
+from config import config as conf
 
 try:
     google_client = GoodleClient()

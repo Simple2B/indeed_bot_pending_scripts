@@ -1,7 +1,7 @@
 import os
 from operator import itemgetter
 
-from indeed_bot_panding_scripts.config import base_dir
+from config import base_dir
 
 
 class Proxy:

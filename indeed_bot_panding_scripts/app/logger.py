@@ -1,6 +1,6 @@
 import logging
 from datetime import datetime
-from indeed_bot_panding_scripts.config import base_dir
+from config import base_dir
 import os
 
 LOGGER_NAME = "IndeedBotLog"

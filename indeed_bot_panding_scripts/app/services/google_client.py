@@ -17,7 +17,7 @@ from googleapiclient.discovery import build
 from google.auth.transport.requests import Request
 
 from app.logger import log
-from indeed_bot_panding_scripts.config import config as conf
+from config import config as conf
 
 
 class GoodleClient:

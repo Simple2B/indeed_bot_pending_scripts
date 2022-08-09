@@ -8,7 +8,7 @@ import httplib2
 import apiclient.discovery
 
 from .utils import print_work_time, current_date, sorted_row_by_titles_list
-from indeed_bot_panding_scripts.config import config as conf
+from config import config as conf
 
 
 class GoogleSheetsClient:
@@ -98,16 +98,8 @@ class GoogleSheetsClient:
 
     @print_work_time
     def get_clients_list(self, full_name: str = "A"):
-        """
-        Returns list of clints from main spreadsheet
-
-        Args:
-            batch (str): batch name
-
-        Returns:
-            List[Dict]: List of dicts generated from spreadsheet data.
-            Dict keys == first row in spreadsheet
-        """
+        if not full_name:
+            full_name = "N/A"
         clients = self.get_all_sheet_records(
             spreadsheet_id=conf.INDEED_MAIN_SPREADSHEET_ID,
             worksheet="INDEED Master Clients",

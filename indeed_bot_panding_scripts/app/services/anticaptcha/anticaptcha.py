@@ -6,7 +6,7 @@ from selenium.common.exceptions import NoSuchElementException, TimeoutException
 from anticaptchaofficial.hcaptchaproxyless import hCaptchaProxyless
 from selenium.webdriver.common.by import By
 
-from indeed_bot_panding_scripts.config import config as conf
+from config import config as conf
 from app.services import Browser
 
 
