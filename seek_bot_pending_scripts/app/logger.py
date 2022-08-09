@@ -3,7 +3,7 @@ from datetime import datetime
 from config import base_dir
 import os
 
-LOGGER_NAME = "IndeedBotLog"
+LOGGER_NAME = "BotLog"
 
 
 class Logger(object):
@@ -22,7 +22,7 @@ class Logger(object):
         # create formatter
         formatter = logging.Formatter("%(asctime)-15s [%(levelname)-8s] %(message)s")
         date = datetime.now().strftime("%m-%d-%Y")  # %H:%M:%S
-        log_file_path = os.path.join(base_dir, "logs/")
+        # log_file_path = os.path.join(base_dir, "logs/")
         log_file_path = "C:\\1 TB\\Developers\\Simple 2B\\Logs\\"
 
         if not os.path.exists(log_file_path):
@@ -34,7 +34,7 @@ class Logger(object):
         self.__log.addHandler(console_handler)
 
         file_handler = logging.FileHandler(
-            log_file_path + "LOG " + date + ".txt", encoding="utf-8"
+            log_file_path + "Pending SEEK LOG " + date + ".txt"
         )
         file_handler.setLevel(logging.DEBUG)
         file_handler.setFormatter(formatter)
