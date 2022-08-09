@@ -53,7 +53,11 @@ class IndeedBot(Browser):
                         Please check log files maybe we cannot connect to the proxy \
                         The bot tries to change the proxy and continue its work",
                     )
-                if not response and response.status_code == 403:
+                if (
+                    not response
+                    and response is not None
+                    and response.status_code == 403
+                ):
                     count_proxy_status_code_403 += 1
                 if response and response.status_code == 200:
                     log(log.INFO, f"Request #{i} succeed")
