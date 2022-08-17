@@ -169,3 +169,6 @@ class GoodleClient:
                     return code[0]
 
         return None
+
+
+google_client = GoodleClient()

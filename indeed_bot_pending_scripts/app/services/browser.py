@@ -1,7 +1,7 @@
 from base64 import b64decode
 import io
 
-from selenium import webdriver
+
 from selenium.webdriver.remote.webelement import WebElement
 from selenium.webdriver import ChromeOptions
 from selenium.webdriver.common.by import By
@@ -10,25 +10,86 @@ from selenium.webdriver.support import expected_conditions as EC
 from selenium.common.exceptions import (
     NoSuchElementException,
     TimeoutException,
+    WebDriverException,
 )
 from selenium.webdriver.common.keys import Keys
 
+from .google_client import google_client
+from .proxies import proxy_service
 from config import config as conf
+from app.logger import log
+
+# from selenium import webdriver
+from seleniumwire import webdriver
 
 
 class Browser:
     def __init__(self):
-        options = ChromeOptions()
-        options.add_argument("--disable-blink-features=AutomationControlled")
-        if conf.HIDE_BROWSER:
-            options.add_argument("--headless")
-            options.add_argument("--log-level=3")
-            options.add_experimental_option("excludeSwitches", ["enable-logging"])
+        self.browser = self.create_browser()
 
-        self.browser = webdriver.Chrome(
-            executable_path=conf.CHROMEDRIVER_PATH, options=options
-        )
         self.browser.maximize_window()
+        # self.is_proxy_works()
+        # options = ChromeOptions()
+        # options.add_argument("--disable-blink-features=AutomationControlled")
+        # # oprions.add_argument("--proxy-server=%s" % PROXY)
+        # if conf.HIDE_BROWSER:
+        #     options.add_argument("--headless")
+        #     options.add_argument("--log-level=3")
+        #     options.add_experimental_option("excludeSwitches", ["enable-logging"])
+
+        # self.browser = webdriver.Chrome(
+        #     executable_path=conf.CHROMEDRIVER_PATH, options=options
+        # )
+        # self.browser.maximize_window()
+
+    def create_browser(self):
+        count_idle_proxies = 0
+        for i in range(proxy_service.count_proxy):
+            # proxy = {
+            #     "http": "http://dander0701_gmail_com:02a8c363c1@83.171.212.17:30013",
+            #     "https": "http://dander0701_gmail_com:02a8c363c1@83.171.212.17:30013",
+            # }
+            proxy = proxy_service.get_proxy()
+            proxy.update({"no_proxy": "localhost,127.0.0.1"})
+            options = {"proxy": proxy}
+            chrome_options = webdriver.ChromeOptions()
+            # chrome_options.add_argument("--no-sandbox")
+            chrome_options.add_argument("--disable-blink-features=AutomationControlled")
+            chrome_options.add_experimental_option(
+                "excludeSwitches", ["enable-logging"]
+            )
+            chrome_options.add_argument("--log-level=5")
+            # chrome_options.add_argument("--headless")
+            # chrome_options.add_argument("--ignore-certificate-errors-spki-list")
+            # chrome_options.add_argument("--ignore-ssl-errors")
+            if conf.HIDE_BROWSER:
+                chrome_options.add_argument("--headless")
+            browser = webdriver.Chrome(
+                executable_path=conf.CHROMEDRIVER_PATH,
+                options=chrome_options,
+                seleniumwire_options=options,
+            )
+            try:
+                log(log.INFO, f"Send request #{i}")
+                browser.get("https://google.com/")
+                return browser
+            except WebDriverException:
+                count_idle_proxies += 1
+                log(log.ERROR, f"Proxy [{proxy}] doesnt work. Skip")
+            except Exception as e:
+                log(
+                    log.ERROR,
+                    f"An unknown error ({e}) occurred while processing this proxy: [{proxy}]. Please check the log file",
+                )
+        if count_idle_proxies >= proxy_service.count_proxy or not proxy_service.proxies:
+            google_client.send_email(
+                conf.SEND_MAIL_TO,
+                "Proxy error",
+                "Proxy error | Error while using proxy. \
+                        Please check log files maybe we cannot connect to the proxy \
+                        The bot will stope its work",
+            )
+            raise ValueError
 
     def open_site(self, url: str):
         self.browser.get(url)

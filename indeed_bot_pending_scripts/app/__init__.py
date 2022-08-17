@@ -5,7 +5,7 @@ from datetime import datetime
 
 from app.services import (
     google_sheets_client,
-    GoodleClient,
+    google_client,
     IndeedClient,
     cuntry_name_to_country_code,
     generator_search_url,
@@ -18,8 +18,6 @@ TK_ROOT = None
 if not conf.TESTING:
     TK_ROOT = tk.Tk()
     TK_ROOT.withdraw()
-
-google_client = GoodleClient()
 
 
 def generate_clients():
@@ -99,14 +97,20 @@ def generate_clients():
             )
             continue
 
-        client = IndeedClient(
-            email=client_data["Email"],
-            password=client_data["Password"],
-            user_name=client_data["Full Name"],
-            country=client_data["Country"],
-            sheet_row_index=client_data["row_index"],
-        )
-
+        try:
+            client = IndeedClient(
+                email=client_data["Email"],
+                password=client_data["Password"],
+                user_name=client_data["Full Name"],
+                country=client_data["Country"],
+                sheet_row_index=client_data["row_index"],
+            )
+        except ValueError:
+            log(
+                log.CRITICAL,
+                "We can't generate users because bot uses broken proxies. Please replace your proxies with new ones. The bot stopped working",
+            )
+            return []
         yield client
 
 
@@ -168,7 +172,7 @@ def run_script():
 
                 log(log.INFO, f"Load Jobs [{url}]")
 
-                jobs = client.browser.find_jobs(url, client.country)
+                jobs = client.browser.find_jobs(url, client_inputs, 0)
 
                 if not jobs or not jobs.get("job_keys"):
                     log(log.INFO, f"Jobs are not loaded. Skip client inputs")
@@ -229,7 +233,9 @@ def run_script():
                     if jobs.get("next_page_url"):
                         log(log.INFO, f"Load Jobs(next page)")
                         jobs = client.browser.find_jobs(
-                            jobs.get("next_page_url"), client.country
+                            jobs.get("next_page_url"),
+                            client_inputs,
+                            jobs.get("pagination"),
                         )
                         jobs_count = len(jobs.get("job_keys"))
                         log(log.INFO, f"Loaded {jobs_count} jobs")

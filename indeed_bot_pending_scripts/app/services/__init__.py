@@ -11,7 +11,7 @@ from .utils import (
     generator_search_url,
     checking_internet_connection,
 )
-from .google_client import GoodleClient
+from .google_client import google_client
 from .anticaptcha import anticaptcha
 from .proxies import proxy_service
 from .const_value import QUERY_KEYS_MAP

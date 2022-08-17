@@ -28,5 +28,7 @@ class Config:
 
     HIDE_BROWSER = os.environ.get("HIDE_BROWSER", "false").lower() in ("true", "1", "t")
 
+    PROXY_STOR = os.environ.get("PROXY_STOR", "")
+
 
 config = Config()

@@ -1,5 +1,6 @@
 from time import sleep
 import re
+import requests
 
 from selenium.webdriver.remote.webelement import WebElement
 from selenium.common.exceptions import NoSuchElementException, TimeoutException
@@ -7,15 +8,30 @@ from anticaptchaofficial.hcaptchaproxyless import hCaptchaProxyless
 from selenium.webdriver.common.by import By
 
 from config import config as conf
-from app.services import Browser
+from app.services import Browser, google_client
+from app.logger import log
 
 
 class AntiCaptcha:
     def __init__(self, browser=None):
+        self.get_balance()
         self.browser = browser
         self.solver = hCaptchaProxyless()
         self.solver.set_verbose(1)
         self.solver.set_key(conf.ANTI_CAPTCHA_KEY)
+
+    def get_balance(self):
+        res = requests.post(
+            "https://api.anti-captcha.com/getBalance",
+            json={"clientKey": conf.ANTI_CAPTCHA_KEY},
+        )
+        data_res = res.json()
+        if data_res.get("balance") <= 1:
+            google_client.send_email(
+                conf.SEND_MAIL_TO,
+                "Solved captcha error",
+                f"Your balance on the 'https://anti-captcha.com/' is less than 1. So soon indeed bot will not be able to pass the captcha, please top up your balance",
+            )
 
     def solve_recaptcha_anticaptcha(
         self, website_key: str, website_URL: str, useragent: str
@@ -26,6 +42,9 @@ class AntiCaptcha:
         g_response = self.solver.solve_and_return_solution()
         if g_response:
             return g_response
+        elif g_response == 0:
+            log(log.CRITICAL, f"Solved captcha error. Please check log above")
+            return False
         else:
             return False
 
@@ -41,7 +60,7 @@ class AntiCaptcha:
             useragent=browser.browser.execute_script("return navigator.userAgent;"),
         )
         if not g_response:
-            return
+            raise ValueError("Captcha is not solved")
 
         browser.browser.execute_script(
             f" \
@@ -67,5 +86,5 @@ class AntiCaptcha:
             self.solve_captcha(captcha_iframe, browser)
             sleep(1)
             return True
-        except (NoSuchElementException, TimeoutException):
+        except (NoSuchElementException, TimeoutException, ValueError):
             return False

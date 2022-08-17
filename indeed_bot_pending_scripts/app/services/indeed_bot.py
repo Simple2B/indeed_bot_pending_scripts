@@ -26,6 +26,8 @@ from .anticaptcha import anticaptcha
 from app.logger import log
 from .proxies import proxy_service
 from config import config as conf
+from bs4 import BeautifulSoup as bs4
+
 
 try:
     google_client = GoodleClient()
@@ -35,65 +37,95 @@ except ValueError:
 
 
 class IndeedBot(Browser):
-    def find_jobs(self, url: str, country: str):
-        response = None
-        if conf.USE_PROXY:
-            count_proxy_status_code_403 = 0
-            for i in range(proxy_service.count_proxy):
-                log(log.INFO, f"Send request #{i}")
-                proxy = proxy_service.get_proxy()
-                try:
-                    response = requests.get(url=url, proxies=proxy, timeout=10)
-                except Exception as e:
-                    log(log.EXCEPTION, str(e))
-                    google_client.send_email(
-                        conf.SEND_MAIL_TO,
-                        "Proxy error",
-                        "Proxy error | Error while using proxy. \
-                        Please check log files maybe we cannot connect to the proxy \
-                        The bot tries to change the proxy and continue its work",
-                    )
-                if (
-                    not response
-                    and response is not None
-                    and response.status_code == 403
-                ):
-                    count_proxy_status_code_403 += 1
-                if response and response.status_code == 200:
-                    log(log.INFO, f"Request #{i} succeed")
-                    break
+    def find_jobs(self, url: str, client_inputs: str, pagination: int):
+        # response = None
+        # if conf.USE_PROXY:
+        #     count_proxy_status_code_403 = 0
+        #     for i in range(proxy_service.count_proxy):
+        #         log(log.INFO, f"Send request #{i}")
+        #         proxy = proxy_service.get_proxy()
+        #         try:
+        #             response = requests.get(url=url, proxies=proxy, timeout=10)
+        #         except Exception as e:
+        #             log(log.EXCEPTION, str(e))
+        #             google_client.send_email(
+        #                 conf.SEND_MAIL_TO,
+        #                 "Proxy error",
+        #                 "Proxy error | Error while using proxy. \
+        #                 Please check log files maybe we cannot connect to the proxy \
+        #                 The bot tries to change the proxy and continue its work",
+        #             )
+        #         if (
+        #             not response
+        #             and response is not None
+        #             and response.status_code == 403
+        #         ):
+        #             count_proxy_status_code_403 += 1
+        #         if response and response.status_code == 200:
+        #             log(log.INFO, f"Request #{i} succeed")
+        #             break
 
-                log(log.ERROR, f"Proxy [{proxy}] doesnt work. Skip")
-            if count_proxy_status_code_403 == proxy_service.count_proxy:
-                log(
-                    log.CRITICAL,
-                    f"All proxies do not work for the country: ({country}). Please add new proxies to the proxy file or change country",
-                )
-                log(log.ERROR, f"Cannot load jobs")
-                return []
+        #         log(log.ERROR, f"Proxy [{proxy}] doesnt work. Skip")
+        #     if count_proxy_status_code_403 == proxy_service.count_proxy:
+        #         log(
+        #             log.CRITICAL,
+        #             f"All proxies do not work for the country: ({country}). Please add new proxies to the proxy file or change country",
+        #         )
+        #         log(log.ERROR, f"Cannot load jobs")
+        #         return []
 
-            if not response or response.status_code != 200:
-                log(log.ERROR, f"Cannot load jobs")
-                return []
-        else:
-            log(log.INFO, f"Load jobs without proxy [USE_PROXY == False]")
-            try:
-                response = requests.get(url=url)
-            except (ConnectionError, ReadTimeout):
-                log(log.ERROR, f"Cannot connect to Indeed. Load jobs failed")
-                return []
+        #     if not response or response.status_code != 200:
+        #         log(log.ERROR, f"Cannot load jobs")
+        #         return []
+        # else:
+        #     log(log.INFO, f"Load jobs without proxy [USE_PROXY == False]")
+        #     try:
+        #         response = requests.get(url=url)
+        #     except (ConnectionError, ReadTimeout):
+        #         log(log.ERROR, f"Cannot connect to Indeed. Load jobs failed")
+        #         return []
 
-        html = response.text
-        job_keys = re.findall(r"\bjobKeysWithInfo..\b(.*)'", html)
-        next_page_url = None
-        if job_keys:
-            next_page_url = re.findall(r"\brel=\"next\" href=\"(.*)\" ", html)
-            if next_page_url:
-                next_page_url = (
-                    re.findall(r"(.*\bindeed.com)", url)[0] + next_page_url[0]
-                )
+        # html = response.text
+        # job_keys = re.findall(r"\bjobKeysWithInfo..\b(.*)'", html)
+        # next_page_url = None
+        # if job_keys:
+        #     next_page_url = re.findall(r"\brel=\"next\" href=\"(.*)\" ", html)
+        #     if next_page_url:
+        #         next_page_url = (
+        #             re.findall(r"(.*\bindeed.com)", url)[0] + next_page_url[0]
+        #         )
+        if "filter" not in url:
+            url += "filter=0&"
+        self.browser.get(url)
+        sleep(2)
+        try:
+            soup = bs4(self.browser.page_source, "html.parser")
+        except Exception:
+            sleep(5)
+            soup = bs4(self.browser.page_source, "html.parser")
+        job_keys = []
+        for job_key in soup.find_all("span"):
+            job_key = job_key.get("id")
+            if job_key is not None and "jobTitle" in job_key:
+                job_key = job_key.replace("jobTitle-", "").strip()
+                job_keys.append(job_key)
+        pagination += int(client_inputs["display"])
+        str_start = f"start={str(pagination)}&"
+        next_page_url = ""
+        if "start" in url:
+            next_page_url = url.replace(
+                f"start={str(pagination - client_inputs['display'])}&", str_start
+            )
+        next_page_url = url + str_start
 
-        return {"job_keys": job_keys, "next_page_url": next_page_url}
+        if len(job_keys) < (client_inputs["display"] - 1):
+            next_page_url = None
+
+        return {
+            "job_keys": job_keys,
+            "next_page_url": next_page_url,
+            "pagination": pagination,
+        }
 
     def get_job_details_by_url(self, url):
         self.browser.execute_script(f"window.open('{url}','_blank');")

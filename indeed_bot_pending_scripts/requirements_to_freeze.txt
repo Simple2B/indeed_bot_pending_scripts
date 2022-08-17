@@ -11,3 +11,4 @@ pyinstaller
 python-dotenv
 sqlalchemy
 pycountry
+selenium-wire
