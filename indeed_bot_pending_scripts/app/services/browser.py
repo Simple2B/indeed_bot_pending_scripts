@@ -19,28 +19,28 @@ from .proxies import proxy_service
 from config import config as conf
 from app.logger import log
 
-# from selenium import webdriver
-from seleniumwire import webdriver
+from selenium import webdriver
+from seleniumwire import webdriver as wirewebdriver
 
 
 class Browser:
     def __init__(self):
-        self.browser = self.create_browser()
+        # self.browser = self.create_browser()
 
-        self.browser.maximize_window()
-        # self.is_proxy_works()
-        # options = ChromeOptions()
-        # options.add_argument("--disable-blink-features=AutomationControlled")
-        # # oprions.add_argument("--proxy-server=%s" % PROXY)
-        # if conf.HIDE_BROWSER:
-        #     options.add_argument("--headless")
-        #     options.add_argument("--log-level=3")
-        #     options.add_experimental_option("excludeSwitches", ["enable-logging"])
-
-        # self.browser = webdriver.Chrome(
-        #     executable_path=conf.CHROMEDRIVER_PATH, options=options
-        # )
         # self.browser.maximize_window()
+        # self.is_proxy_works()
+        options = ChromeOptions()
+        options.add_argument("--disable-blink-features=AutomationControlled")
+        options.add_argument("--log-level=4")
+        # oprions.add_argument("--proxy-server=%s" % PROXY)
+        if conf.HIDE_BROWSER:
+            options.add_argument("--headless")
+            options.add_experimental_option("excludeSwitches", ["enable-logging"])
+
+        self.browser = webdriver.Chrome(
+            executable_path=conf.CHROMEDRIVER_PATH, options=options
+        )
+        self.browser.maximize_window()
 
     def create_browser(self):
         count_idle_proxies = 0
@@ -62,9 +62,8 @@ class Browser:
             # chrome_options.add_argument("--headless")
             # chrome_options.add_argument("--ignore-certificate-errors-spki-list")
             # chrome_options.add_argument("--ignore-ssl-errors")
-            if conf.HIDE_BROWSER:
-                chrome_options.add_argument("--headless")
-            browser = webdriver.Chrome(
+            chrome_options.add_argument("--headless")
+            browser = wirewebdriver.Chrome(
                 executable_path=conf.CHROMEDRIVER_PATH,
                 options=chrome_options,
                 seleniumwire_options=options,

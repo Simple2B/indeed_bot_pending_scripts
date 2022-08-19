@@ -97,20 +97,14 @@ def generate_clients():
             )
             continue
 
-        try:
-            client = IndeedClient(
-                email=client_data["Email"],
-                password=client_data["Password"],
-                user_name=client_data["Full Name"],
-                country=client_data["Country"],
-                sheet_row_index=client_data["row_index"],
-            )
-        except ValueError:
-            log(
-                log.CRITICAL,
-                "We can't generate users because bot uses broken proxies. Please replace your proxies with new ones. The bot stopped working",
-            )
-            return []
+        client = IndeedClient(
+            email=client_data["Email"],
+            password=client_data["Password"],
+            user_name=client_data["Full Name"],
+            country=client_data["Country"],
+            sheet_row_index=client_data["row_index"],
+        )
+
         yield client
 
 

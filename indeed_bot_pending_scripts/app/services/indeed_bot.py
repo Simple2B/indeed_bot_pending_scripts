@@ -38,71 +38,27 @@ except ValueError:
 
 class IndeedBot(Browser):
     def find_jobs(self, url: str, client_inputs: str, pagination: int):
-        # response = None
-        # if conf.USE_PROXY:
-        #     count_proxy_status_code_403 = 0
-        #     for i in range(proxy_service.count_proxy):
-        #         log(log.INFO, f"Send request #{i}")
-        #         proxy = proxy_service.get_proxy()
-        #         try:
-        #             response = requests.get(url=url, proxies=proxy, timeout=10)
-        #         except Exception as e:
-        #             log(log.EXCEPTION, str(e))
-        #             google_client.send_email(
-        #                 conf.SEND_MAIL_TO,
-        #                 "Proxy error",
-        #                 "Proxy error | Error while using proxy. \
-        #                 Please check log files maybe we cannot connect to the proxy \
-        #                 The bot tries to change the proxy and continue its work",
-        #             )
-        #         if (
-        #             not response
-        #             and response is not None
-        #             and response.status_code == 403
-        #         ):
-        #             count_proxy_status_code_403 += 1
-        #         if response and response.status_code == 200:
-        #             log(log.INFO, f"Request #{i} succeed")
-        #             break
-
-        #         log(log.ERROR, f"Proxy [{proxy}] doesnt work. Skip")
-        #     if count_proxy_status_code_403 == proxy_service.count_proxy:
-        #         log(
-        #             log.CRITICAL,
-        #             f"All proxies do not work for the country: ({country}). Please add new proxies to the proxy file or change country",
-        #         )
-        #         log(log.ERROR, f"Cannot load jobs")
-        #         return []
-
-        #     if not response or response.status_code != 200:
-        #         log(log.ERROR, f"Cannot load jobs")
-        #         return []
-        # else:
-        #     log(log.INFO, f"Load jobs without proxy [USE_PROXY == False]")
-        #     try:
-        #         response = requests.get(url=url)
-        #     except (ConnectionError, ReadTimeout):
-        #         log(log.ERROR, f"Cannot connect to Indeed. Load jobs failed")
-        #         return []
-
-        # html = response.text
-        # job_keys = re.findall(r"\bjobKeysWithInfo..\b(.*)'", html)
-        # next_page_url = None
-        # if job_keys:
-        #     next_page_url = re.findall(r"\brel=\"next\" href=\"(.*)\" ", html)
-        #     if next_page_url:
-        #         next_page_url = (
-        #             re.findall(r"(.*\bindeed.com)", url)[0] + next_page_url[0]
-        #         )
         if "filter" not in url:
             url += "filter=0&"
-        self.browser.get(url)
-        sleep(2)
+
         try:
-            soup = bs4(self.browser.page_source, "html.parser")
+            new_browser = self.create_browser()
+            new_browser.get(url)
+        except ValueError:
+            log(
+                log.CRITICAL,
+                "We can't generate users because bot uses broken proxies. Please replace your proxies with new ones. The bot stopped working",
+            )
+            return []
+
+        # self.browser.get(url)
+        sleep(3)
+        try:
+            soup = bs4(new_browser.page_source, "html.parser")
         except Exception:
             sleep(5)
-            soup = bs4(self.browser.page_source, "html.parser")
+            soup = bs4(new_browser.page_source, "html.parser")
+        new_browser.quit()
         job_keys = []
         for job_key in soup.find_all("span"):
             job_key = job_key.get("id")
