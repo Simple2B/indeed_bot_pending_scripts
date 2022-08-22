@@ -1,7 +1,6 @@
 import pickle
 import os
 import base64
-import re
 from time import sleep
 from uuid import uuid4
 
@@ -11,7 +10,6 @@ from google_auth_oauthlib.flow import InstalledAppFlow
 from googleapiclient.discovery import build
 from googleapiclient.http import MediaInMemoryUpload
 from google.auth.transport.requests import Request
-from bs4 import BeautifulSoup
 from email.message import EmailMessage
 
 from app.logger import log

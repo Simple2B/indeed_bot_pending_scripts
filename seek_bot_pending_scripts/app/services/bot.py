@@ -1,22 +1,10 @@
-from time import sleep
 import requests
 
-from selenium.common.exceptions import (
-    NoSuchElementException,
-    TimeoutException,
-    NoAlertPresentException,
-    WebDriverException,
-)
 
-from selenium.webdriver.common.by import By
-from selenium.webdriver.support.ui import Select
-
-from .browser import Browser
 from .utils import current_date, str_has_exclude_word
 from .google_sheets import google_sheets_client
 from .google_client import GoodleClient
 from app.logger import log
-from config import config as conf
 from .bs4_parser import BS4Parser
 
 try:
@@ -27,7 +15,7 @@ except ValueError as e:
 bs4parser = BS4Parser
 
 
-class Bot(Browser):
+class Bot:
     def find_jobs(self, url: str, page: int = 1):
         response = None
 
@@ -173,66 +161,6 @@ class Client:
 
         self.browser = Bot()
 
-    def __del__(self):
-        self.browser.browser.quit()
-
 
 class SeekClient(Client):
-    def login(self):
-        # open login page
-        log(log.INFO, f"Login user {self.email}")
-        try:
-            self.browser.open_site("https://www.seek.com.au/oauth/login/?returnUrl=%2F")
-        except WebDriverException:
-            sleep(3)
-            try:
-                if not self.browser.browser.current_url.startswith(
-                    "https://login.seek.com/login"
-                ):
-                    log(
-                        log.ERROR,
-                        f"Faild login, url :{self.browser.browser.current_url}",
-                    )
-                    return False
-            except WebDriverException:
-                log(log.ERROR, "Page load error")
-                return False
-        sleep(3)
-
-        # find and fill email input
-        self.browser.find_and_fill(
-            find_by=By.ID, value="emailAddress", fill_value=self.email
-        )
-
-        self.browser.find_and_fill(
-            find_by=By.ID, value="password", fill_value=self.password
-        )
-
-        self.browser.find_and_click(By.XPATH, "//button[@type='submit']")
-
-        try:
-            self.browser.wait_for_url("https://www.seek.com.au/", time=20)
-        except (TimeoutException, WebDriverException):
-            return False
-            # log and send email
-
-        error = None
-        try:
-            error_block = self.browser.wait_for_element(
-                By.XPATH, "//*[@xmlns and @aria-hidden]/../../../div/div/div/span", 3
-            )
-            error = error_block.text
-        except (NoSuchElementException, TimeoutException, WebDriverException):
-            pass
-
-        if error:
-            log(log.ERROR, error)
-            google_client.send_email(
-                conf.SEND_MAIL_TO,
-                "Login Failed",
-                f"Error was found on the login page when the user logged in to the site. \
-                Please check log files also if client: {self.user_name} data in the table is valid \
-                The bot tries to login the client:  {self.user_name} again and continue its work",
-            )
-            return False
-        return True
+    pass

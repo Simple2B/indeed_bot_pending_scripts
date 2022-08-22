@@ -6,7 +6,7 @@ from oauth2client.service_account import ServiceAccountCredentials
 import httplib2
 import apiclient.discovery
 
-from .utils import print_work_time, current_date, sorted_row_by_titles_list
+from .utils import sorted_row_by_titles_list
 from config import config as conf
 
 
@@ -250,9 +250,20 @@ class GoogleSheetsClient:
             return
 
         client_input_worksheet = self.get_worksheet(
-            spreadsheet_id=spreadsheet_id, worksheet_name="SEEK Client Applications"
+            spreadsheet_id=spreadsheet_id,
+            worksheet_name="INDEED-SEEK Client Applications",
         )
         title_list_client_input = client_input_worksheet.row_values(1)
+
+        for job_data in self.sample_jobs:
+            job_data.update(
+                {
+                    "Client": client_name,
+                    "All Words": job_data.get("Keyword", "N/A"),
+                    "JobId": job_data.get("JobID", "N/A"),
+                    "Job Type": job_data.get("Type", "N/A"),
+                }
+            )
 
         rows = [
             sorted_row_by_titles_list(job_data, title_list_client_input)
@@ -261,7 +272,7 @@ class GoogleSheetsClient:
 
         self.add_rows(
             spreadsheet_id=spreadsheet_id,
-            range="SEEK Client Applications!A1",
+            range="INDEED-SEEK Client Applications!A1",
             rows=rows,
         )
 
@@ -272,19 +283,10 @@ class GoogleSheetsClient:
             )
             title_list_main_aplications = main_applications_worksheet.row_values(1)
 
-            rows_for_main = []
-            for job_data in self.sample_jobs:
-                job_data.update(
-                    {
-                        "Client": client_name,
-                        "All Words": job_data.get("Keyword", "N/A"),
-                        "JobId": job_data.get("JobID", "N/A"),
-                        "Job Type": job_data.get("Type", "N/A"),
-                    }
-                )
-                rows_for_main.append(
-                    sorted_row_by_titles_list(job_data, title_list_main_aplications)
-                )
+            rows_for_main = [
+                sorted_row_by_titles_list(job_data, title_list_main_aplications)
+                for job_data in self.sample_jobs
+            ]
             self.add_rows(
                 spreadsheet_id=conf.SEEK_MAIN_SPREADSHEET_ID,
                 range="INDEED-SEEK Master Applications!A1",

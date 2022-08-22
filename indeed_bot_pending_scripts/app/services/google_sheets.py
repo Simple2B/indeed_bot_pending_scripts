@@ -228,7 +228,7 @@ class GoogleSheetsClient:
             return
 
         client_applications_worksheet = self.get_worksheet(
-            spreadsheet_id, "INDEED Client Applications"
+            spreadsheet_id, "INDEED-SEEK Client Applications"
         )
         title_list_client_applications = client_applications_worksheet.row_values(1)
 
@@ -237,6 +237,8 @@ class GoogleSheetsClient:
             row = {
                 "Country": country,
                 "Status": "Sample",
+                "Client": client_name,
+                "Jobsite": "Indeed",
             }
             row.update(job_data)
             rows.append(row)
@@ -247,7 +249,7 @@ class GoogleSheetsClient:
 
         self.add_rows(
             spreadsheet_id=spreadsheet_id,
-            range="INDEED Client Applications!A1",
+            range="INDEED-SEEK Client Applications!A1",
             rows=sorted_rows_by_client_title,
         )
 
@@ -256,14 +258,6 @@ class GoogleSheetsClient:
                 conf.INDEED_MAIN_SPREADSHEET_ID, "INDEED-SEEK Master Applications"
             )
             title_list_master_applications = master_applications_worksheet.row_values(1)
-
-            for row in rows:
-                row.update(
-                    {
-                        "Client": client_name,
-                        "Jobsite": "Indeed",
-                    }
-                )
 
             sorted_rows_by_master_title = [
                 sorted_row_by_titles_list(row, title_list_master_applications)

@@ -1,6 +1,5 @@
 # flake8: noqa F401
 from .google_sheets import google_sheets_client
-from .browser import Browser
 from .bot import Bot, SeekClient
 from .utils import (
     current_date,
