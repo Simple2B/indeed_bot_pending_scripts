@@ -38,8 +38,8 @@ def generate_clients():
                 log.INFO,
                 f"The bot found several clients with this Full Name: {batch} .Bot will processing just first client.",
             )
-            client_data = client_data[0]
         if client_data:
+            client_data = client_data[0]
             break
         batch = ""
         full_name_msg = "Clients not found. Please use another client full name"
