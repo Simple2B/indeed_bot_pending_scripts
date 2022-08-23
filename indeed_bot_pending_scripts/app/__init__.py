@@ -50,14 +50,6 @@ def generate_clients():
     )
     log(log.INFO, f"Client data: {client_data}")
 
-    if not client_data["Active"].lower() in ["true", "t"]:
-        log(
-            log.ERROR,
-            f"Client {client_data.get('Full Name')} in not \
-            Active. Skip client",
-        )
-        return
-
     REQUIRED_FIELDS = ["Full Name", "Email", "Password"]
     has_required_fields = True
     for field in REQUIRED_FIELDS:

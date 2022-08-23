@@ -64,13 +64,6 @@ def generate_clients():
         f"Process Client: {client_data['Full Name']}",
     )
 
-    if not bool(client_data["Active"]):  # check active
-        log(
-            log.ERROR,
-            f"Client {client_data.get('Full Name')} in not Active. Skip client",
-        )
-        return
-
     REQUIRED_FIELDS = ["Full Name", "Email", "Password"]
     has_required_fields = True
     for field in REQUIRED_FIELDS:

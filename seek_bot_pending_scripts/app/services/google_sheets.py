@@ -104,6 +104,7 @@ class GoogleSheetsClient:
             client
             for client in clients
             if client.get("Full Name").lower() == full_name.lower()
+            and client.get("Active", " ").lower() in ["true", "t"]
         ]
 
         return clients
