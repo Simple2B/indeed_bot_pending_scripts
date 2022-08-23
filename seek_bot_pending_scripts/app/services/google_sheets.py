@@ -5,6 +5,7 @@ import gspread
 from oauth2client.service_account import ServiceAccountCredentials
 import httplib2
 import apiclient.discovery
+from gspread.exceptions import GSpreadException
 
 from .utils import sorted_row_by_titles_list
 from config import config as conf
@@ -62,41 +63,6 @@ class GoogleSheetsClient:
             return file.get("id")
         return None
 
-    def load_questions(self, client_name: str):
-        self.connect()
-        client_sheet_id = self.find_client_sheet(
-            client_name
-        )  # look for questions from 2 tebles
-        questions = []
-
-        questions_sheets = [
-            {
-                "question_from": "client",
-                "sheet_id": client_sheet_id,
-                "worksheet": "SEEK Client Questions",
-            },
-            {
-                "question_from": "master",
-                "sheet_id": conf.SEEK_MAIN_SPREADSHEET_ID,
-                "worksheet": "SEEK Main Questions",
-            },
-        ]
-
-        for sheet in questions_sheets:
-            sheet_id = sheet.get("sheet_id")
-            worksheet = sheet.get("worksheet")
-            question_from = sheet.get("question_from")
-
-            sheet = self.gclient.open_by_key(sheet_id)
-            questions_sheet = sheet.worksheet(worksheet)
-            sheet_data = questions_sheet.get_all_records()
-            for data in sheet_data:
-                data["user_name"] = client_name
-                data["question_from"] = question_from
-            questions += sheet_data
-
-        return questions
-
     def parse_spreadsheet_id(self, spreadsheet_url):
         self.connect()
         if spreadsheet_url.startswith("https://docs.google.com"):
@@ -110,7 +76,12 @@ class GoogleSheetsClient:
 
         spreadsheet = self.gclient.open_by_key(spreadsheet_id)
         worksheet = spreadsheet.worksheet(worksheet)
-        all_records = worksheet.get_all_records()
+        try:
+            all_records = worksheet.get_all_records()
+        except GSpreadException:
+            raise ValueError(
+                f"Spreadsheet is not correct, please make sure all headers are unique in the {worksheet.title}"
+            )
 
         if add_row_index:
             counter = 2

@@ -85,7 +85,7 @@ class GoogleSheetsClient:
             all_records = worksheet.get_all_records()
         except GSpreadException:
             raise ValueError(
-                "Table is not correct, please make sure the all columns are unique"
+                f"Spreadsheet is not correct, please make sure all headers are unique in the {worksheet.title}"
             )
 
         if add_row_index:
