@@ -246,7 +246,10 @@ def main():
                 Please check the log file \
                 The bot tries to restart in automatic mode",
             )
-            log(log.EXCEPTION, f"Run script error {str(e)}")
+            log(
+                log.EXCEPTION,
+                f"Run script error {str(e.args[0]) if e.args else str(e)}",
+            )
     else:
         while True:
             if run_script():
