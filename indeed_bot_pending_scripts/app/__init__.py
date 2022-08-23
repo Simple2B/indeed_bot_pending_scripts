@@ -114,6 +114,7 @@ def run_script():
         return
 
     for client_inputs in client.clients_inputs:
+        count_jobs = 0
         try:
             log(log.INFO, f"Process client inputs: {client_inputs}")
 
@@ -129,7 +130,7 @@ def run_script():
                 )
                 continue
 
-            # count_display = int(client_inputs.get("display", "50"))
+            count_total_result = int(client_inputs.get("total_results", "5000"))
             country_code = ""
             if client.country != "United States":
                 country_code = cuntry_name_to_country_code(client.country)
@@ -166,20 +167,13 @@ def run_script():
                                 job_key=job_key,
                                 country_code=country_code,
                             )
-                            # if google_sheets_client.count_added_jobs == int(
-                            #     count_display
-                            # ):
-                            #     log(
-                            #         log.INFO,
-                            #         "Count jobs reached the client inputs display's, Skip client inputs",
-                            #     )
-                            #     google_sheets_client.save_sample_list_jobs(
-                            #         spreadsheet_id=client.spreadsheet_url,
-                            #         country=client.country,
-                            #         add_to_main_spreadsheet=True,
-                            #         client_name=client.user_name,
-                            #     )
-                            #     break
+                            count_jobs += 1
+                            if count_jobs == count_total_result:
+                                log(
+                                    log.INFO,
+                                    "-----Count jobs reached the client inputs display's, Skip client inputs-----",
+                                )
+                                break
                         except Exception as e:
                             log(log.ERROR, f"Process job sample {job_key} error")
                             log(log.ERROR, e)
@@ -202,7 +196,7 @@ def run_script():
 
                 log(log.INFO, f"Process loaded jobs ended")
                 # load next page
-                if jobs.get("next_page_url"):
+                if jobs.get("next_page_url") and count_jobs != count_total_result:
                     log(log.INFO, f"Load Jobs(next page)")
                     jobs = client.browser.find_jobs(
                         jobs.get("next_page_url"),
