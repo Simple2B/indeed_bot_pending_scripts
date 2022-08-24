@@ -58,7 +58,7 @@ def generate_clients():
             checking_internet_connection()
             google_client.send_email(
                 conf.SEND_MAIL_TO,
-                "Error reading client data",
+                f"Error reading client data in pending scripts. Time: {datetime.now()}, SEVERITY: MEDIUM",
                 f"Client has not data in '{field}' cell. Skip client. \
                 Check the spreadsheet of clients. One of the clients does \
                 not have a filled field: {field} \
@@ -77,7 +77,7 @@ def generate_clients():
         checking_internet_connection()
         google_client.send_email(
             conf.SEND_MAIL_TO,
-            "Error in client data",
+            f"Error in client data in pending scripts.  Time: {datetime.now()}, SEVERITY: MEDIUM",
             f"Client {client_data['Full Name']} spreadsheet file not found. Skip client \
             The bot did not find spreadsheet file of {client_data['Full Name']}. \
             Please check whether the spreadsheet file exists and whether the client({client_data['Full Name']}) has this table \
@@ -181,7 +181,7 @@ def run_script():
                             checking_internet_connection()
                             google_client.send_email(
                                 conf.SEND_MAIL_TO,
-                                "Process sample Job Error",
+                                f"Process sample Job Error in pending scripts.  Time: {datetime.now()}, SEVERITY: LOW",
                                 f"An unknown error occurred while getting data for job_id: {job_key} for client: {client.user_name}. \
                                 Please check the log file. The bot continues working by getting data from another job",
                             )
@@ -227,7 +227,7 @@ def main():
         except Exception as e:
             google_client.send_email(
                 conf.SEND_MAIL_TO,
-                "Run script error",
+                f"Run script error in pending scripts.  Time: {datetime.now()}, SEVERITY: HIGH",
                 "The problem occurred while launching the Bot. \
                 Please check the log file \
                 The bot tries to restart in automatic mode",

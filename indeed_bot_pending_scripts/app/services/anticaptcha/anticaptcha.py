@@ -1,6 +1,7 @@
 from time import sleep
 import re
 import requests
+from datetime import datetime
 
 from selenium.webdriver.remote.webelement import WebElement
 from selenium.common.exceptions import NoSuchElementException, TimeoutException
@@ -8,7 +9,8 @@ from anticaptchaofficial.hcaptchaproxyless import hCaptchaProxyless
 from selenium.webdriver.common.by import By
 
 from config import config as conf
-from app.services import Browser, google_client
+from app.services import Browser
+from app.services.google_client import google_client
 from app.logger import log
 
 
@@ -29,7 +31,7 @@ class AntiCaptcha:
         if data_res.get("balance") <= 1:
             google_client.send_email(
                 conf.SEND_MAIL_TO,
-                "Solved captcha error",
+                f"Solved captcha error in pending scripts. Time: {datetime.now()}, SEVERITY: MEDIUM",
                 f"Your balance on the 'https://anti-captcha.com/' is less than 1. So soon indeed bot will not be able to pass the captcha, please top up your balance",
             )
 

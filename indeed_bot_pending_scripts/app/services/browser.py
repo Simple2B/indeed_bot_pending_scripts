@@ -1,5 +1,6 @@
 from base64 import b64decode
 import io
+from datetime import datetime
 
 
 from selenium.webdriver.remote.webelement import WebElement
@@ -83,10 +84,10 @@ class Browser:
         if count_idle_proxies >= proxy_service.count_proxy or not proxy_service.proxies:
             google_client.send_email(
                 conf.SEND_MAIL_TO,
-                "Proxy error",
+                f"Proxy error in pending scripts.  Time: {datetime.now()}, SEVERITY: HIGH",
                 "Proxy error | Error while using proxy. \
-                        Please check log files maybe we cannot connect to the proxy \
-                        The bot will stope its work",
+                Please check log files maybe we cannot connect to the proxy \
+                The bot will stope its work",
             )
             raise ValueError
 

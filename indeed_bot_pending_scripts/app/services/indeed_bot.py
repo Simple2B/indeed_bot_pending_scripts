@@ -1,5 +1,6 @@
 from time import sleep
 import json
+from datetime import datetime
 
 from selenium.common.exceptions import (
     NoSuchElementException,
@@ -180,7 +181,7 @@ class Client:
                 )
                 google_client.send_email(
                     conf.SEND_MAIL_TO,
-                    "Error getting from Client inputs",
+                    f"Error getting from Client inputs pending scripts. Time: {datetime.now()}, SEVERITY: MEDIUM",
                     f"Client inputs table is not correct. Please make sure the spreadsheet of client:{user_name} follows rules and check log files \
                     The but skips the client: {user_name} continues its work on another client",
                 )

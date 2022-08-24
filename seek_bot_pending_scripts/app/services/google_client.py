@@ -93,7 +93,7 @@ class GoodleClient:
         )
         return {"filename": file_name, "id": file.get("id")}
 
-    def send_email(self, mail_to: str, msg_text: str, subject: str):
+    def send_email(self, mail_to: str, subject: str, msg_text: str):
         try:
             message = EmailMessage()
             message.set_content(msg_text)
