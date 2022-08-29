@@ -31,7 +31,7 @@ class Browser:
         options = ChromeOptions()
         options.add_argument("--disable-blink-features=AutomationControlled")
         options.add_argument("--log-level=4")
-        options.add_argument("--headless")
+        # options.add_argument("--headless")
         # oprions.add_argument("--proxy-server=%s" % PROXY)
         if conf.HIDE_BROWSER:
             options.add_experimental_option("excludeSwitches", ["enable-logging"])
