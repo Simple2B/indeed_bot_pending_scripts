@@ -5,6 +5,7 @@ from datetime import datetime
 from selenium.common.exceptions import (
     NoSuchElementException,
     TimeoutException,
+    WebDriverException,
 )
 
 from selenium.webdriver.common.by import By
@@ -33,24 +34,28 @@ class IndeedBot(Browser):
         if "filter" not in url:
             url += "filter=0&"
 
-        try:
-            new_browser = self.create_browser()
-            new_browser.get(url)
-        except ValueError:
-            log(
-                log.CRITICAL,
-                "We can't generate users because bot uses broken proxies. Please replace your proxies with new ones. The bot stopped working",
-            )
+        for _ in range(3):
+            try:
+                new_browser = self.browser
+                sleep(2)
+                new_browser.get(url)
+                break
+            except (WebDriverException):
+                log(
+                    log.ERROR,
+                    "Error: The bot can't load the jobs page. It tries again",
+                )
+                sleep(3)
+        else:
             return []
 
-        # self.browser.get(url)
         sleep(3)
         try:
             soup = bs4(new_browser.page_source, "html.parser")
         except Exception:
             sleep(5)
             soup = bs4(new_browser.page_source, "html.parser")
-        new_browser.quit()
+        # new_browser.quit()
         job_keys = []
         for job_key in soup.find_all("span"):
             job_key = job_key.get("id")

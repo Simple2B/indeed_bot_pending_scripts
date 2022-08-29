@@ -49,4 +49,4 @@ class Proxy:
         }
 
 
-proxy_service = Proxy()
+# proxy_service = Proxy()
