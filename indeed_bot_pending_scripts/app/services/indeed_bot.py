@@ -6,6 +6,7 @@ from selenium.common.exceptions import (
     NoSuchElementException,
     TimeoutException,
     WebDriverException,
+    JavascriptException,
 )
 
 from selenium.webdriver.common.by import By
@@ -85,10 +86,45 @@ class IndeedBot(Browser):
         self.switch_tab(1)
 
         try:
-            json_string = self.wait_for_element(By.CSS_SELECTOR, "body > pre")
-            json_object = json.loads(json_string.text)
-            return json_object
-        except (NoSuchElementException, TimeoutException) as e:
+            sleep(1)
+            json_object = self.browser.execute_script("return window._initialData")
+
+            job_advertiser = json_object.get("companyAvatarModel")
+            if job_advertiser is not None:
+                job_advertiser = job_advertiser.get("companyName", "")
+            else:
+                try:
+                    job_advertiser = (
+                        json_object.get("jobInfoWrapperModel")
+                        .get("jobInfoModel")
+                        .get("jobInfoHeaderModel")
+                        .get("companyName", "")
+                    )
+                except AttributeError:
+                    job_advertiser = ""
+
+            try:
+                job_type = (
+                    json_object.get("jobInfoWrapperModel", {})
+                    .get("jobInfoModel", {})
+                    .get("jobMetadataHeaderModel", {})
+                    .get("jobType", "Full-time")
+                )
+            except AttributeError:
+                job_type = "Full-time"
+
+            job_title = json_object.get("jobTitle", "")
+            job_location = json_object.get("jobLocation", "Not found on site page")
+            # is_external = json_object.get("viewJobButtonLinkContainerModel")
+
+            return {
+                "job_advertiser": job_advertiser,
+                "job_title": job_title,
+                "job_location": job_location,
+                "job_type": job_type,
+                # "is_external": is_external,
+            }
+        except JavascriptException as e:
             return False
         finally:
             self.browser.close()
@@ -110,28 +146,19 @@ class IndeedBot(Browser):
             log(log.INFO, "Couldn't load job details. Skip job")
             return
 
-        job_advertiser = job_details["sicm"]["cmN"]
-        if not job_details["jobTitle"] and not job_advertiser:
+        job_advertiser = job_details.get("job_advertiser")
+        job_title = job_details.get("job_title")
+        job_location = job_details.get("job_location")
+        job_type = job_details.get("job_type")
+
+        if not job_title and not job_advertiser:
             log(log.ERROR, "Job title and job company didn't find. Skip job")
             return
 
-        if not custom_title_filters(
-            client_inputs, job_details["jobTitle"], job_advertiser
-        ):
+        if not custom_title_filters(client_inputs, job_title, job_advertiser):
             return
 
-        job_key = job_details["jobKey"]
-        job_title = f"=hyperlink(\"https://{country_code}{'.' if country_code else ''}indeed.com/viewjob?jk={job_key}\",\"{job_details['jobTitle']}\")"
-        job_location = job_details["jobLocationModel"]["fullFormattedLocation"]
-
-        job_type = job_details["jtsT"]
-        if not job_type:
-            if client_inputs.get("jobs_type", "all") != "all":
-                job_type = client_inputs.get("jobs_type")
-            else:
-                job_type = (
-                    job_details.get("rwt") if job_details.get("rwt") else "Full-time"
-                )
+        job_title = f"=hyperlink(\"https://{country_code}{'.' if country_code else ''}indeed.com/viewjob?jk={job_key}\",\"{job_title}\")"
 
         job_data = {
             "All Words": client_inputs["all_words"],
@@ -193,6 +220,9 @@ class Client:
                 self.clients_inputs = []
 
         self.browser = IndeedBot()
+
+    def __del__(self):
+        self.browser.browser.quit()
 
 
 # is_captcha_solved = anticaptcha.find_and_solve_captcha(browser=self.browser)

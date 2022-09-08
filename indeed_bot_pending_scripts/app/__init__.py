@@ -141,7 +141,16 @@ def run_script():
                     )
                     continue
 
-            url = generator_search_url(country_code, client_inputs)
+            try:
+                url = generator_search_url(country_code, client_inputs)
+            except (AttributeError, KeyError, TypeError):
+                log(
+                    log.ERROR,
+                    f"Client input is not correct."
+                    f"Please follow the rules in trello,"
+                    f"or check enter value in the client input. Bot skip the client input.",
+                )
+                continue
 
             log(log.INFO, f"Load Jobs [{url}]")
 
