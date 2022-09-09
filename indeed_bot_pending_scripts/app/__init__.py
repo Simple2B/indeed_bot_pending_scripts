@@ -36,7 +36,8 @@ def generate_clients():
         if len(client_data) > 1:
             log(
                 log.INFO,
-                f"The bot found several clients with this Full Name: {batch} .Bot will processing just first client.",
+                f"The bot found several clients with this Full Name: {batch} .Bot will processing just first client. \n"
+                "---------------------------------------------------------",
             )
         if client_data:
             client_data = client_data[0]
@@ -58,11 +59,10 @@ def generate_clients():
             checking_internet_connection()
             google_client.send_email(
                 conf.SEND_MAIL_TO,
-                f"Error reading client data in pending scripts. Time: {datetime.now()}, SEVERITY: MEDIUM",
-                f"Client has not data in '{field}' cell. Skip client. \
-                Check the spreadsheet of clients. One of the clients does \
-                not have a filled field: {field} \
-                The bot continues working by reading another client data",
+                f"Error reading client data in indeed pending scripts. Time: {datetime.now()}, SEVERITY: MEDIUM",
+                f"Client has not data in '{field}' cell. Skip client. \n"
+                f"Check the spreadsheet of clients. One of the clients does not have a filled field: {field} \n"
+                "The bot stop working ",
             )
             has_required_fields = False
             break
@@ -77,11 +77,11 @@ def generate_clients():
         checking_internet_connection()
         google_client.send_email(
             conf.SEND_MAIL_TO,
-            f"Error in client data in pending scripts.  Time: {datetime.now()}, SEVERITY: MEDIUM",
-            f"Client {client_data['Full Name']} spreadsheet file not found. Skip client \
-            The bot did not find spreadsheet file of {client_data['Full Name']}. \
-            Please check whether the spreadsheet file exists and whether the client({client_data['Full Name']}) has this table \
-            The bot continues working by reading another client data",
+            f"Error in client data in indeed pending scripts.  Time: {datetime.now()}, SEVERITY: HIGH",
+            f"Client {client_data['Full Name']}. Spreadsheet file not found. Skip client \n"
+            f"The bot did not find spreadsheet file of {client_data['Full Name']}. \n"
+            f"Please check whether the spreadsheet file exists and whether the client({client_data['Full Name']}) has this table \n"
+            "The bot stop working",
         )
         return
 
@@ -92,6 +92,14 @@ def generate_clients():
         country=client_data["Country"],
         sheet_row_index=client_data["row_index"],
     )
+    if client.browser.browser is None:
+        google_client.send_email(
+            conf.SEND_MAIL_TO,
+            f"Error getting from indeed pending scripts. Error with chromedriver.  Time: {datetime.now()}, SEVERITY: HIGH",
+            f"Your chromedriver is old please replace chromedriver to new one in folder drivers \n"
+            f"The bot stop working",
+        )
+        return
 
     return client
 
@@ -101,7 +109,7 @@ def run_script():
     if not client:
         log(
             log.CRITICAL,
-            "Client data is bad. The bot cannot process client data. The bot'll try restart",
+            "Client data is bad or chromedriver is old. The bot cannot process client. The bot will stop",
         )
         return
 
@@ -168,12 +176,12 @@ def run_script():
 
                 # process loaded jobs
                 if jobs.get("job_keys"):
-                    for job_key in jobs.get("job_keys"):
+                    for job_data in jobs.get("job_keys"):
 
                         try:
                             client.browser.process_job(
                                 client_inputs=client_inputs,
-                                job_key=job_key,
+                                job_data=job_data,
                                 country_code=country_code,
                             )
                             count_jobs += 1
@@ -184,15 +192,18 @@ def run_script():
                                 )
                                 break
                         except Exception as e:
-                            log(log.ERROR, f"Process job sample {job_key} error")
+                            log(
+                                log.ERROR,
+                                f"Process job sample {job_data.get('job_id')} error",
+                            )
                             log(log.ERROR, e)
                             log(log.ERROR, "-------------------------")
                             checking_internet_connection()
                             google_client.send_email(
                                 conf.SEND_MAIL_TO,
                                 f"Process sample Job Error in pending scripts.  Time: {datetime.now()}, SEVERITY: LOW",
-                                f"An unknown error occurred while getting data for job_id: {job_key} for client: {client.user_name}. \
-                                Please check the log file. The bot continues working by getting data from another job",
+                                f"An unknown error occurred while getting data for job_id: {job_data.get('job_id')} for client: {client.user_name}. \n"
+                                "Please check the log file. The bot continues working by getting data from another job",
                             )
 
                     log(log.INFO, "Save sample list of jobs")
@@ -227,19 +238,26 @@ def main():
     if not conf.TESTING:
         try:
             while True:
-                if run_script():
+                run_script_data = run_script()
+                if run_script_data:
                     log(
                         log.INFO,
                         f"Process client was successful now you can see all sample jobs",
+                    )
+                    break
+                elif run_script_data is None:
+                    log(
+                        log.INFO,
+                        f"Process client was not successful, check the logs above",
                     )
                     break
         except Exception as e:
             google_client.send_email(
                 conf.SEND_MAIL_TO,
                 f"Run script error in pending scripts.  Time: {datetime.now()}, SEVERITY: HIGH",
-                "The problem occurred while launching the Bot. \
-                Please check the log file \
-                The bot tries to restart in automatic mode",
+                "The problem occurred while launching the Bot. \n"
+                "Please check the log file \n"
+                "The bot tries to restart in automatic mode",
             )
             log(
                 log.EXCEPTION,

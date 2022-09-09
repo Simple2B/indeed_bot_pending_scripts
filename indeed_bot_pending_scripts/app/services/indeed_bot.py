@@ -58,11 +58,43 @@ class IndeedBot(Browser):
             soup = bs4(new_browser.page_source, "html.parser")
         # new_browser.quit()
         job_keys = []
-        for job_key in soup.find_all("span"):
-            job_key = job_key.get("id")
-            if job_key is not None and "jobTitle" in job_key:
-                job_key = job_key.replace("jobTitle-", "").strip()
-                job_keys.append(job_key)
+        list_jobs = soup.find_all("td", {"class", "resultContent"})
+        for job in list_jobs:
+            log(log.INFO, f"Start getting data of job")
+            job_data = {}
+            job_location: list = job.find_all("div", {"class", "companyLocation"})
+            job_advertiser: list = job.find_all("span", {"class", "companyName"})
+            job_title_and_id: list = job.select(".resultContent span[title]")
+            job_type: list = job.find_all("div", {"class", "attribute_snippet"})
+            try:
+                jon_title: str = job_title_and_id[0].text
+                job_id: str = (
+                    job_title_and_id[0].get("id").replace("jobTitle-", "").strip()
+                )
+                job_data["job_location"] = (
+                    job_location[0].text
+                    if job_location
+                    else "Location not found on the site page"
+                )
+                job_data["job_advertiser"] = (
+                    job_advertiser[0].text if job_advertiser else ""
+                )
+                job_data["job_title"] = jon_title
+                job_data["job_id"] = job_id
+                job_data["job_type"] = (
+                    [
+                        div.text
+                        for div in job_type
+                        if div.svg.get("aria-label") == "Job type"
+                    ][0]
+                    if job_type
+                    else "Full-time"
+                )
+            except (IndexError, AttributeError, ValueError):
+                log(log.ERROR, "Couldn't load job details. Skip job")
+            else:
+                job_keys.append(job_data)
+
         pagination += int(client_inputs["display"])
         str_start = f"start={str(pagination)}&"
         next_page_url = ""
@@ -70,9 +102,17 @@ class IndeedBot(Browser):
             next_page_url = url.replace(
                 f"start={str(pagination - client_inputs['display'])}&", str_start
             )
-        next_page_url = url + str_start
+        else:
+            next_page_url = url + str_start
 
-        if len(job_keys) < (client_inputs["display"] - 1):
+        pagination_next_page = soup.find_all(
+            "a", {"data-testid": "pagination-page-next"}
+        )
+        pagination_next_page_another = soup.find_all("span", {"class": "np"})
+        if not pagination_next_page and (
+            not pagination_next_page_another
+            or ("start" in url and len(pagination_next_page_another) == 1)
+        ):
             next_page_url = None
 
         return {
@@ -81,75 +121,18 @@ class IndeedBot(Browser):
             "pagination": pagination,
         }
 
-    def get_job_details_by_url(self, url):
-        self.browser.execute_script(f"window.open('{url}','_blank');")
-        self.switch_tab(1)
-
-        try:
-            sleep(1)
-            json_object = self.browser.execute_script("return window._initialData")
-
-            job_advertiser = json_object.get("companyAvatarModel")
-            if job_advertiser is not None:
-                job_advertiser = job_advertiser.get("companyName", "")
-            else:
-                try:
-                    job_advertiser = (
-                        json_object.get("jobInfoWrapperModel")
-                        .get("jobInfoModel")
-                        .get("jobInfoHeaderModel")
-                        .get("companyName", "")
-                    )
-                except AttributeError:
-                    job_advertiser = ""
-
-            try:
-                job_type = (
-                    json_object.get("jobInfoWrapperModel", {})
-                    .get("jobInfoModel", {})
-                    .get("jobMetadataHeaderModel", {})
-                    .get("jobType", "Full-time")
-                )
-            except AttributeError:
-                job_type = "Full-time"
-
-            job_title = json_object.get("jobTitle", "")
-            job_location = json_object.get("jobLocation", "Not found on site page")
-            # is_external = json_object.get("viewJobButtonLinkContainerModel")
-
-            return {
-                "job_advertiser": job_advertiser,
-                "job_title": job_title,
-                "job_location": job_location,
-                "job_type": job_type,
-                # "is_external": is_external,
-            }
-        except JavascriptException as e:
-            return False
-        finally:
-            self.browser.close()
-            self.switch_tab(0)
-
     def process_job(
         self,
-        job_key: str,
+        job_data: str,
         client_inputs: list,
         country_code: str,
     ):
-        log(log.INFO, f"Start getting data of job({job_key})")
 
-        job_url = f"https://{country_code}{'.' if country_code else ''}indeed.com/viewjob?jk={job_key}&vjs=1"
-
-        log(log.INFO, "Load job details")
-        job_details = self.get_job_details_by_url(job_url)
-        if not job_details:
-            log(log.INFO, "Couldn't load job details. Skip job")
-            return
-
-        job_advertiser = job_details.get("job_advertiser")
-        job_title = job_details.get("job_title")
-        job_location = job_details.get("job_location")
-        job_type = job_details.get("job_type")
+        job_advertiser = job_data.get("job_advertiser")
+        job_title = job_data.get("job_title")
+        job_location = job_data.get("job_location")
+        job_type = job_data.get("job_type")
+        job_id = job_data.get("job_id")
 
         if not job_title and not job_advertiser:
             log(log.ERROR, "Job title and job company didn't find. Skip job")
@@ -158,11 +141,11 @@ class IndeedBot(Browser):
         if not custom_title_filters(client_inputs, job_title, job_advertiser):
             return
 
-        job_title = f"=hyperlink(\"https://{country_code}{'.' if country_code else ''}indeed.com/viewjob?jk={job_key}\",\"{job_title}\")"
+        job_title = f"=hyperlink(\"https://{country_code}{'.' if country_code else ''}indeed.com/viewjob?jk={job_id}\",\"{job_title}\")"
 
-        job_data = {
+        pro_job_data = {
             "All Words": client_inputs["all_words"],
-            "JobId": job_key,
+            "JobId": job_id,
             "Job Title": job_title,
             "Advertiser": job_advertiser,
             "Timestamp": current_date(),
@@ -172,9 +155,9 @@ class IndeedBot(Browser):
 
         log(
             log.INFO,
-            f"Add data job Id:({job_data.get('JobId')}) to sample list of jobs",
+            f"Add data job Id:({job_id}) to sample list of jobs",
         )
-        google_sheets_client.add_to_sample_list_jobs(job_data=job_data)
+        google_sheets_client.add_to_sample_list_jobs(job_data=pro_job_data)
         # google_sheets_client.count_added_jobs += 1
 
     def create_and_save_screenshot(self, element: str = None):
@@ -213,16 +196,17 @@ class Client:
                 )
                 google_client.send_email(
                     conf.SEND_MAIL_TO,
-                    f"Error getting from Client inputs pending scripts. Time: {datetime.now()}, SEVERITY: MEDIUM",
-                    f"Client inputs table is not correct. Please make sure the spreadsheet of client:{user_name} follows rules and check log files \
-                    The but skips the client: {user_name} continues its work on another client",
+                    f"Error getting from Client inputs pending scripts. Time: {datetime.now()}, SEVERITY: HIGH",
+                    f"Client inputs table is not correct. Please make sure the spreadsheet of client:{user_name} follows rules and check log files \n"
+                    f"The bot stop working",
                 )
                 self.clients_inputs = []
 
         self.browser = IndeedBot()
 
     def __del__(self):
-        self.browser.browser.quit()
+        if self.browser.browser is not None:
+            self.browser.browser.quit()
 
 
 # is_captcha_solved = anticaptcha.find_and_solve_captcha(browser=self.browser)

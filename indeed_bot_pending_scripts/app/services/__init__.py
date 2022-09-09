@@ -12,5 +12,4 @@ from .utils import (
     checking_internet_connection,
 )
 from .google_client import google_client
-from .anticaptcha import anticaptcha
 from .const_value import QUERY_KEYS_MAP

@@ -12,6 +12,7 @@ from selenium.common.exceptions import (
     NoSuchElementException,
     TimeoutException,
     WebDriverException,
+    SessionNotCreatedException,
 )
 from selenium.webdriver.common.keys import Keys
 
@@ -36,10 +37,17 @@ class Browser:
         if conf.HIDE_BROWSER:
             options.add_experimental_option("excludeSwitches", ["enable-logging"])
 
-        self.browser = webdriver.Chrome(
-            executable_path=conf.CHROMEDRIVER_PATH, options=options
-        )
-        self.browser.maximize_window()
+        try:
+            self.browser = webdriver.Chrome(
+                executable_path=conf.CHROMEDRIVER_PATH, options=options
+            )
+            self.browser.maximize_window()
+        except SessionNotCreatedException as e:
+            log(
+                log.ERROR,
+                "Your chromedriver is old please replace chromedriver to new one in folder drivers",
+            )
+            self.browser = None
 
     # def create_browser(self):
     #     count_idle_proxies = 0
