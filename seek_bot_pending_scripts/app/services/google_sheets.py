@@ -97,7 +97,7 @@ class GoogleSheetsClient:
 
         clients = self.get_all_sheet_records(
             spreadsheet_id=conf.SEEK_MAIN_SPREADSHEET_ID,
-            worksheet="SEEK Main Clients",
+            worksheet="SEEK",
             add_row_index=True,
         )
         clients = [
@@ -163,7 +163,7 @@ class GoogleSheetsClient:
     def get_client_inputs(self, spreadsheet_id: str):
         client_inputs = self.get_all_sheet_records(
             spreadsheet_id=spreadsheet_id,
-            worksheet="SEEK Client Input",
+            worksheet="SEEK",
             add_row_index=True,
         )
         client_inputs = [
@@ -223,7 +223,7 @@ class GoogleSheetsClient:
 
         client_input_worksheet = self.get_worksheet(
             spreadsheet_id=spreadsheet_id,
-            worksheet_name="INDEED-SEEK Client Applications",
+            worksheet_name="Applications",
         )
         title_list_client_input = client_input_worksheet.row_values(1)
 
@@ -244,14 +244,14 @@ class GoogleSheetsClient:
 
         self.add_rows(
             spreadsheet_id=spreadsheet_id,
-            range="INDEED-SEEK Client Applications!A1",
+            range="Applications!A1",
             rows=rows,
         )
 
         if add_to_main_spreadsheet:
             main_applications_worksheet = self.get_worksheet(
                 spreadsheet_id=conf.SEEK_MAIN_SPREADSHEET_ID,
-                worksheet_name="INDEED-SEEK Master Applications",
+                worksheet_name="Applications",
             )
             title_list_main_aplications = main_applications_worksheet.row_values(1)
 
@@ -261,7 +261,7 @@ class GoogleSheetsClient:
             ]
             self.add_rows(
                 spreadsheet_id=conf.SEEK_MAIN_SPREADSHEET_ID,
-                range="INDEED-SEEK Master Applications!A1",
+                range="Applications!A1",
                 rows=rows_for_main,
             )
             # limit 60 requests per minute
