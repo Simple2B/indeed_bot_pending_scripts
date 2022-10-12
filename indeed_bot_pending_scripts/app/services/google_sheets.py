@@ -102,7 +102,7 @@ class GoogleSheetsClient:
             full_name = "N/A"
         clients = self.get_all_sheet_records(
             spreadsheet_id=conf.INDEED_MAIN_SPREADSHEET_ID,
-            worksheet="INDEED Master Clients",
+            worksheet="INDEED",
             add_row_index=True,
         )
         clients = [
